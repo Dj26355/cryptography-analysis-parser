@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cryptography Analysis Parser — App</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, "Segoe UI", Arial; margin: 0; padding: 0; background:#f7f9fc; color:#111; }
+    header { background:#0b5673; color:white; padding:12px 18px; }
+    .container { padding:18px; max-width:1100px; margin:0 auto }
+    .tabs { display:flex; gap:8px; margin-bottom:12px }
+    .tab { padding:8px 12px; background:white; border-radius:6px; cursor:pointer; box-shadow:0 1px 0 rgba(0,0,0,0.05) }
+    .tab.active { background:#0b5673; color:white }
+    .panel { display:none; background:white; padding:12px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.04); margin-bottom:12px }
+    .panel.active { display:block }
+    textarea { width:100%; min-height:90px; font-family: monospace; padding:8px }
+    .row { display:flex; gap:12px; margin-bottom:12px }
+    .col { flex:1 }
+    button { padding:8px 12px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer }
+    .code-block { background:#0f1720; color:#d1fae5; padding:12px; border-radius:6px; overflow:auto }
+    table { width:100%; border-collapse:collapse }
+    th,td { padding:6px; border:1px solid #eee; text-align:left }
+    .small { font-size:90% }
+    .controls { display:flex; gap:8px; align-items:center }
+    footer { text-align:center; padding:12px; color:#666 }
+    pre { white-space:pre-wrap }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1 style="margin:0;font-size:18px">Cryptography Analysis Parser — App</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="tabs" id="mainTabs">
+      <div class="tab active" data-target="analyzer">Analyzer</div>
+      <div class="tab" data-target="decoder">Decoder</div>
+      <div class="tab" data-target="batch">Batch</div>
+      <div class="tab" data-target="results">Results</div>
+      <div class="tab" data-target="settings">Settings</div>
+    </div>
+
+    <section id="analyzer" class="panel active">
+      <h2>Analyzer</h2>
+      <div class="row">
+        <div class="col">
+          <textarea id="inputString" placeholder="Paste an address, hash, or transaction ID here"></textarea>
+        </div>
+        <div style="width:200px;display:flex;flex-direction:column;gap:8px">
+          <button id="autoDetect">Auto Detect</button>
+          <button id="exportJSON">Export JSON</button>
+          <button id="exportCSV">Export CSV</button>
+          <button id="exportPDF">Export PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="decoder" class="panel">
+      <h2>Decoder</h2>
+      <div class="row">
+        <div class="col">
+          <textarea id="decodeInput" placeholder="Enter encoded data here"></textarea>
+          <div id="detectionOptions" style="display:none;margin-top:8px">
+            <div id="encodingOptions"></div>
+          </div>
+        </div>
+        <div style="width:260px;display:flex;flex-direction:column;gap:8px">
+          <label class="small">Cipher</label>
+          <select id="cipherSelect">
+            <option value="">-- select --</option>
+            <option value="base64">base64</option>
+            <option value="hex">hex</option>
+            <option value="rot13">rot13</option>
+          </select>
+          <label class="small">Key (if required)</label>
+          <input id="decodeKey" />
+          <button id="decodeBtn">Decode</button>
+          <button id="autoDetectEncoding">Detect Encoding</button>
+          <div id="decodeResult" style="display:none;margin-top:8px">
+            <div id="decodedContent"></div>
+            <div class="controls"><button id="copyDecoded">Copy</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="batch" class="panel">
+      <h2>Batch Processing</h2>
+      <div class="row">
+        <div class="col">
+          <textarea id="batchInput" placeholder="One address or hash per line"></textarea>
+        </div>
+        <div style="width:260px;display:flex;flex-direction:column;gap:8px">
+          <input type="file" id="batchFile" accept="text/*" />
+          <button id="startBatch">Start</button>
+          <div id="batchProgress" style="display:none">Processing... <span id="batchProgressCount"></span></div>
+        </div>
+      </div>
+
+      <div id="batchResults" style="display:none;margin-top:8px">
+        <h3>Batch Results</h3>
+        <div id="batchResultsList"></div>
+      </div>
+    </section>
+
+    <section id="results" class="panel">
+      <h2>Results</h2>
+      <div id="detectionResult"></div>
+      <div id="addressAnalysis"></div>
+      <div id="riskAnalysis"></div>
+      <h3>Visualization</h3>
+      <div id="visualization"></div>
+    </section>
+
+    <section id="settings" class="panel">
+      <h2>Settings</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label><input type="checkbox" id="showRiskOnly" checked /> Show risk-only</label>
+        <label><input type="checkbox" id="enableMalwareCheck" checked /> Enable malware check</label>
+        <label><input type="checkbox" id="quarantineSuspicious" checked /> Quarantine suspicious</label>
+        <label><input type="checkbox" id="includeRawAPI" /> Include raw API</label>
+        <label><input type="checkbox" id="includePDFCharts" checked /> Include PDF charts</label>
+        <label><input type="checkbox" id="useBlockchain" checked /> Use blockchain lookups</label>
+        <label><input type="checkbox" id="useBlockCypher" checked /> Use BlockCypher</label>
+        <label>Rate limit (req/sec): <input id="rateLimit" type="number" value="2" min="0" /></label>
+        <label><input type="checkbox" id="enableCache" checked /> Enable cache</label>
+      </div>
+      <div style="margin-top:12px"><button id="saveSettings">Save</button> <button id="clearCache">Clear Cache</button></div>
+    </section>
+
+  </main>
+
+  <footer>
+    Built from repository: Dj26355/cryptography-analysis-parser
+  </footer>
+
+  <!-- Minimal runtime stubs so app.js can initialize in the browser. Replace with real modules later. -->
+  <script>
+    // Lightweight UIComponents used by app.js
+    window.UIComponents = {
+      initTabs() {
+        const tabs = document.querySelectorAll('#mainTabs .tab');
+        tabs.forEach(t => t.addEventListener('click', () => {
+          tabs.forEach(x => x.classList.remove('active'));
+          t.classList.add('active');
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          document.getElementById(t.dataset.target).classList.add('active');
+        }));
+      },
+      initResultTabs() {},
+      showResults() { document.querySelector('#results').classList.add('active'); },
+      displayResult(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; },
+      updateProgress(current, total) { const el = document.getElementById('batchProgress'); if (el) { el.style.display = 'block'; document.getElementById('batchProgressCount').textContent = `${current}/${total}`; } },
+      showWarning(title, message, list) { alert(title + '\n' + message + (list ? '\n' + list.join('\n') : '')); }
+    };
+
+    // Sanitizer and small helpers
+    window.Sanitizer = {
+      sanitizeInput(s) { return String(s).trim(); },
+      escapeHTML(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); },
+      stripSensitiveData(data) { try { const copy = JSON.parse(JSON.stringify(data)); return copy; } catch(e) { return data; } }
+    };
+
+    window.Helpers = {
+      formatNumber(n) { return Number(n).toLocaleString(); },
+      satoshisToBTC(n) { return (Number(n)/1e8).toFixed(8); },
+      sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    };
+
+    // Very small parsers/detectors that return safe defaults so the UI can function.
+    window.HashParser = { parse(input) { return { input, detections: [] }; } };
+    window.AddressParser = { parse(input) { return { count:0, detections:[], primary:{chain:null} }; } };
+    window.TxParser = { parse(input) { return { detections:[] }; } };
+    window.MalwareDetector = { analyze(input) { return { shouldQuarantine:false, threats:[] }; } };
+    window.Visualizer = { createAddressTree(data) { return JSON.stringify(data, null, 2); } };
+    window.RiskAnalyzer = { analyze(data) { return { score:0, risks:[] }; }, _generateSummary(rs){ return rs.length ? rs.map(r=>r.type).join(',') : 'None'; } };
+    window.EncodingDetector = { detect(input) { return { detections:[{ encoding:'base64', confidence:0.5, notes:'Try base64' },{ encoding:'hex', confidence:0.3, notes:'Try hex' }] }; } };
+    window.CryptoCodec = { decode(input, cipher, key){ try{ if(cipher==='base64'){ return { success:true, cipher, result: atob(input) }; } if(cipher==='hex'){ const bytes = input.replace(/[^0-9a-f]/gi,''); let str=''; for(let i=0;i<bytes.length;i+=2) str += String.fromCharCode(parseInt(bytes.substr(i,2),16)); return { success:true, cipher, result: str }; } if(cipher==='rot13'){ return { success:true, cipher, result: input.replace(/[A-Za-z]/g, c=>"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".charAt(("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".indexOf(c)+13)%52)) }; } return { success:false, error:'Unknown cipher' }; } catch(e){ return { success:false, error:e.message }; } } };
+
+    // Exporters (download helpers)
+    function downloadBlob(filename, content, mime='application/octet-stream'){ const a = document.createElement('a'); const blob = new Blob([content], {type: mime}); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 5000); }
+    window.JSONExporter = { download(data, name){ downloadBlob(name, JSON.stringify(data, null, 2), 'application/json'); } };
+    window.CSVExporter = { download(data, name){ const rows = [['key','value']]; try{ for(const k in data){ rows.push([k, JSON.stringify(data[k])]); } }catch(e){} downloadBlob(name, rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'), 'text/csv'); } };
+    window.TXTExporter = { download(data, name){ downloadBlob(name, JSON.stringify(data, null, 2), 'text/plain'); } };
+    window.PDFExporter = { download(data, name){ // Minimal fallback (download JSON as .pdf)
+        downloadBlob(name, JSON.stringify(data, null, 2), 'application/pdf'); } };
+
+    // Network adapters placeholders
+    window.BitcoinAdapter = function(){ this.getAddress = async (addr)=>({ chain:'BTC', address:addr, balance:0, txCount:0, lastSeen:null, source:'stub' }); };
+    window.BitcoinCashAdapter = function(){ this.getAddress = async (addr)=>({ chain:'BCH', address:addr, balance:0, txCount:0, lastSeen:null, source:'stub' }); };
+    window.BitcoinSVAdapter = function(){ this.getAddress = async (addr)=>({ chain:'BSV', address:addr, balance:0, txCount:0, lastSeen:null, source:'stub' }); };
+  </script>
+
+  <!-- Main application script (from repository) -->
+  <script src="/app.js"></script>
+</body>
+</html>
